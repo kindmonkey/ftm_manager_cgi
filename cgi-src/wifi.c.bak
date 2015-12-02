@@ -1,0 +1,195 @@
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+#include <unistd.h>
+#include "qdecoder.h"
+
+int FTMC_WIFI(qentry_t *pReq)
+{
+
+	char *lpszCmd = pReq->getstr(pReq, "cmd", false);
+
+	if (strcmp(lpszCmd, "status") == 0)
+	{
+		qcgires_setcontenttype(pReq, "text/xml");
+		printf("<?xml version='1.0' encoding='ISO-8859-1'?>\n");
+		printf("<hostapd>\n");
+
+		char	szBuf[1024];
+		FILE *pPF = popen("/www/cgi-bin/status_hostapd.sh", "r");
+		if (pPF != NULL)
+		{
+			while(fgets(szBuf, sizeof(szBuf), pPF) != 0)
+			{
+				char	szTag[64];	
+				char	szData0[64];
+				//char	szData1[64];
+				
+				switch(sscanf(szBuf, "%s %s", szTag, szData0))//, szData1))
+				{
+				case	2:
+					{
+						if (strcmp(szTag, "logger_syslog") == 0)
+						{
+							printf("<logger_syslog>%s</logger_syslog>\n", szData0);					
+						}
+						else if (strcmp(szTag, "logger_syslog_level") == 0)
+						{
+							printf("<logger_syslog_level>%s</logger_syslog_level>\n", szData0);					
+						}
+						else if (strcmp(szTag, "logger_stdout") == 0)
+						{
+							printf("<logger_stdout>%s</logger_stdout>\n", szData0);					
+						}
+						else if (strcmp(szTag, "logger_stdout_level") == 0)
+						{
+							printf("<logger_stdout_level>%s</logger_stdout_level>\n", szData0);					
+						}
+						else if (strcmp(szTag, "interface") == 0)
+						{
+							printf("<interface>%s</interface>\n", szData0);					
+						}
+						else if (strcmp(szTag, "ignore_broadcast_ssid") == 0)
+						{
+							printf("<ignore_broadcast_ssid>%s</ignore_broadcast_ssid>\n", szData0);					
+						}
+						else if (strcmp(szTag, "driver") == 0)
+						{
+							printf("<driver>%s</driver>\n", szData0);					
+						}
+						else if (strcmp(szTag, "bridge") == 0)
+						{
+							printf("<bridge>%s</bridge>\n", szData0);					
+						}
+						else if (strcmp(szTag, "ssid") == 0)
+						{
+							printf("<ssid>%s</ssid>\n", szData0);					
+						}
+						else if (strcmp(szTag, "hw_mode") == 0)
+						{
+							printf("<hw_mode>%s</hw_mode>\n", szData0);					
+						}
+						else if (strcmp(szTag, "channel") == 0)
+						{
+							printf("<channel>%s</channel>\n", szData0);					
+						}
+						else if (strcmp(szTag, "macaddr_acl") == 0)
+						{
+							printf("<macaddr_acl>%s</macaddr_acl>\n", szData0);					
+						}
+						else if (strcmp(szTag, "auth_algs") == 0)
+						{
+							printf("<auth_algs>%s</auth_algs>\n", szData0);					
+						}
+						else if (strcmp(szTag, "wpa") == 0)
+						{
+							printf("<wpa>%s</wpa>\n", szData0);					
+						}
+						else if (strcmp(szTag, "wpa_passphrase") == 0)
+						{
+							printf("<wpa_passphrase>%s</wpa_passphrase>\n", szData0);					
+						}
+						else if (strcmp(szTag, "wpa_key_mgmt") == 0)
+						{
+							printf("<wpa_key_mgmt>%s</wpa_key_mgmt>\n", szData0);					
+						}
+						else if (strcmp(szTag, "wpa_pairwise") == 0)
+						{
+							printf("<wpa_pairwise>%s</wpa_pairwise>\n", szData0);					
+						}
+						else if (strcmp(szTag, "wpa_ptk_rekey") == 0)
+						{
+							printf("<wpa_ptk_rekey>%s</wpa_ptk_rekey>\n", szData0);					
+						}
+					}
+					break;	
+				}
+			}
+			pclose(pPF);
+		}
+		printf("</hostapd>\n");
+	}
+	
+	else if(strcmp(lpszCmd, "set") == 0)
+	{
+		/*
+		char *lpszEnable	= pReq->getstr(pReq, "enable", false);
+		char *lpszInterface = pReq->getstr(pReq, "if", false);
+		char *lpszStatic	= pReq->getstr(pReq, "static", false);
+		char *lpszStart		= pReq->getstr(pReq, "start", false);
+		char *lpszEnd		= pReq->getstr(pReq, "end", false);
+		char *lpszRouter	= pReq->getstr(pReq, "router", false);
+		char *lpszTime		= pReq->getstr(pReq, "time", false);
+		*/
+		char *lpszSSID		= pReq->getstr(pReq, "wifi_ssid", false);
+		char *lpszPASSWD	= pReq->getstr(pReq, "wpa_passphrase", false);
+
+		if ((lpszSSID == NULL) ||
+			(lpszPASSWD == NULL))
+		{
+			qcgires_setcontenttype(pReq, "text/xml");
+			printf("<?xml version='1.0' encoding='ISO-8859-1'?>\n");
+			printf("<WIFI_CONFIG>\n");	
+			printf("<RET>ERROR</RET>\n");
+			printf("<MSG>Invalid Parameter!</MSG>\n");
+			printf("</WIFI_CONFIG>\n");	
+		}
+
+		FILE *fp = fopen("/tmp/hostapd.conf", "w");
+		if (fp == NULL)
+		{
+			qcgires_setcontenttype(pReq, "text/xml");
+			printf("<?xml version='1.0' encoding='ISO-8859-1'?>\n");
+			printf("<WIFI_CONFIG>\n");	
+			printf("<RET>SYSTEM_ERROR</RET>\n");
+			printf("<MSG>Can't create file\n[/tmp/hostapd.conf]</MSG>\n");
+			printf("</WIFI_CONFIG>\n");	
+			return	-1;	
+		}
+
+		fprintf(fp, "ssid=%s\n", lpszSSID);
+		fprintf(fp, "wpa_passphrase=%s\n", lpszPASSWD);
+		fprintf(fp, "logger_syslog=1\n");
+		fprintf(fp, "logger_syslog_level=0\n");
+		fprintf(fp, "logger_stdout=1\n");
+		fprintf(fp, "logger_stdout_level=0\n");
+		fprintf(fp, "interface=wlan0\n");
+		fprintf(fp, "ignore_broadcast_ssid=0\n");
+		fprintf(fp, "driver=nl80211\n");
+		fprintf(fp, "bridge=br-lan\n");
+		fprintf(fp, "hw_mode=g\n");
+		fprintf(fp, "channel=1\n");
+		fprintf(fp, "macaddr_acl=0\n");
+		fprintf(fp, "auth_algs=1\n");
+		fprintf(fp, "wpa=2\n");
+		fprintf(fp, "wpa_key_mgmt=WPA-PSK\n");
+		fprintf(fp, "wpa_pairwise=CCMP\n");
+		fprintf(fp, "wpa_ptk_rekey=600\n");
+		fclose(fp);
+		
+		fp = popen("cp -f /tmp/hostapd.conf /etc/hostapd.conf;sync;sync", "r");
+		pclose(fp);
+
+		fp = popen("./restart_ap.sh", "r");
+		if (fp == NULL)
+		{
+			perror("error");
+		} else {
+			pclose(fp);
+		}
+
+		qcgires_setcontenttype(pReq, "text/xml");
+		printf("<?xml version='1.0' encoding='ISO-8859-1'?>\n");
+		printf("<WIFI_CONFIG>\n");
+		printf("<RET>OK</RET>\n");
+		printf("</WIFI_CONFIG>\n");
+	}
+	else
+	{
+		return	-1;	
+	}
+	
+	return	0;
+}
