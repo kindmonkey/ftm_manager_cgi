@@ -17,16 +17,17 @@ int FTMC_SENSOR(qentry_t *pReq)
 
 				
 		char command[1024];
-		sprintf(command, "/www/cgi-bin/sensor_script/get_humidity_info.sh %s | awk -f /www/cgi-bin/sensor_script/get_humidity_info.awk", lpszMac);
+		sprintf(command, "/www/cgi-bin/sensor_script/get_fte_es7.sh %s", lpszMac);
 
 		char	szBuf[1024];
 		FILE *pPF = popen(command, "r");
-		
+
 		if (pPF != NULL)
 		{
 			qcgires_setcontenttype(pReq, "text/xml");
 			printf("<?xml version='1.0' encoding='ISO-8859-1'?>\n");
 			printf("<SENSOR_LIST>\n");
+			//printf("<TEST>%s</TEST>\n", command);
 			while(fgets(szBuf, sizeof(szBuf), pPF) != 0)
 			{
 				char	szMac[64];
@@ -36,11 +37,11 @@ int FTMC_SENSOR(qentry_t *pReq)
 				char	szSN[64];
 				char	szState[64];
 				char	szValue[64];
-				char	szLastValue[64];
-				char	szLastTime[64];
-				char	szInterval[64];
+				//char	szLastValue[64];
+				//char	szLastTime[64];
+				//char	szInterval[64];
 
-				if (10 == sscanf(szBuf, "%s %s %s %s %s %s %s %s %s %s", szMac, szID, szType, szName, szSN, szState, szValue, szLastValue, szLastTime, szInterval))
+				if (7 == sscanf(szBuf, "%s %s %s %s %s %s %s", szMac, szID, szType, szName, szSN, szState, szValue))//, szLastValue, szLastTime, szInterval))
 				{
 					printf("<SENSOR>\n");
 					printf("<MAC>%s</MAC>", szMac);
@@ -50,9 +51,9 @@ int FTMC_SENSOR(qentry_t *pReq)
 					printf("<SN>%s</SN>\n", szSN);
 					printf("<STATE>%s</STATE>\n", szState);
 					printf("<VALUE>%s</VALUE>\n", szValue);
-					printf("<LASTVALUE>%s</LASTVALUE>\n", szLastValue);
-					printf("<LASTTIME>%s</LASTTIME>\n", szLastTime);
-					printf("<INTERVAL>%s</INTERVAL>\n", szInterval);
+					//printf("<LASTVALUE>%s</LASTVALUE>\n", szLastValue);
+					//printf("<LASTTIME>%s</LASTTIME>\n", szLastTime);
+					//printf("<INTERVAL>%s</INTERVAL>\n", szInterval);
 					printf("</SENSOR>\n");
 				}
 			}
