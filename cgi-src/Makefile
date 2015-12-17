@@ -46,7 +46,7 @@ TARGETS		= req.cgi
 
 ## Main
 all:	${TARGETS}
-	sudo cp ${TARGETS} /www/cgi-bin
+	sudo cp ${TARGETS} ../../ftm_manager/cgi-bin
 
 req.cgi: $(REQ_OBJS)
 	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ $(REQ_OBJS) ${LIBS}
