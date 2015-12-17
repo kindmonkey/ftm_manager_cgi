@@ -47,12 +47,12 @@ LIBDIR		= ${exec_prefix}/lib
 HEADERDIR	= ${prefix}/include
 
 ## Which compiler & options for release
-CC		= arm-openwrt-linux-gcc -std=gnu99
+CC		= gcc -std=gnu99
 CFLAGS		= -Wall -fPIC -g
 CPPFLAGS	=  -I/usr/include -I/usr/local/include -I./ -D_GNU_SOURCE
 
 ## Utilities
-AR		= /usr/local/bin/ar
+AR		= /usr/bin/ar
 ARFLAGS		= -rc
 CHMOD		= /bin/chmod
 INSTALL		= /usr/bin/install -c

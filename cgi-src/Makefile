@@ -28,12 +28,12 @@
 ## $Id: Makefile.in 636 2012-05-07 23:40:43Z seungyoung.kim $
 ################################################################################
 
-prefix		= /home/xtra/Work/FTMB-S1/ramdisk/apps/target/usr
-exec_prefix	= ${prefix}
+#prefix		= /home/xtra/Work/FTMB-S1/ramdisk/apps/target/usr
+#exec_prefix	= ${prefix}
 
 ## Compiler options
-CC			= arm-openwrt-linux-gcc -std=gnu99
-#CC	= gcc -std=gnu99
+#CC			= arm-openwrt-linux-gcc -std=gnu99
+CC	= gcc -std=gnu99
 CFLAGS		= -Wall -fPIC -g -I. -DDEBUG
 CPPFLAGS	= -Iqdecoder-12.0.4/src/  -I./ -D_GNU_SOURCE
 LIBS		= qdecoder-12.0.4/src/libqdecoder.a 
@@ -46,7 +46,7 @@ TARGETS		= req.cgi
 
 ## Main
 all:	${TARGETS}
-	cp ${TARGETS} ../cgi-bin
+	sudo cp ${TARGETS} /www/cgi-bin
 
 req.cgi: $(REQ_OBJS)
 	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ $(REQ_OBJS) ${LIBS}

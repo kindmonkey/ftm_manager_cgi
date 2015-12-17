@@ -32,7 +32,7 @@ prefix		= /usr/local
 exec_prefix	= ${prefix}
 
 ## Compiler options
-CC	= arm-openwrt-linux-gcc -std=gnu99
+CC	= gcc -std=gnu99
 CFLAGS	= -Wall -fPIC -g
 CPPFLAGS= -I../src/  -I/usr/include -I/usr/local/include -I./ -D_GNU_SOURCE
 LIBS	= ../src/libqdecoder.a 
