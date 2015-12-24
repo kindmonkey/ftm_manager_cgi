@@ -107,7 +107,9 @@ int main(int argc, char *argv[])
 	{
 		char	*lpszSSID = pReq->getstr(pReq, "ssid", false);
 		time_t	xTime = time(0);
-	
+
+        pCmd->fService(pReq);
+/*
 		if (strcmp(pCmd->lpszName, "public") == 0)
 		{
 			pCmd->fService(pReq);
@@ -121,6 +123,7 @@ int main(int argc, char *argv[])
 		{
 			FTMC_LoadIndex(pReq);
 		}
+        */
 	}	
 
     // De-allocate memories
