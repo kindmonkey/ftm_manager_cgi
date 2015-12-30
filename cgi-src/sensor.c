@@ -178,6 +178,33 @@ int FTMC_SENSOR(qentry_t *pReq)
         }
         pclose(pPF);
 
+    } else if (strcmp(lpszCmd, "delete") == 0) {
+        char *lpszMac		= pReq->getstr(pReq, "mac", false);
+		char *lpszID		= pReq->getstr(pReq, "id", false);
+
+		if ((lpszMac == NULL) || 
+			(lpszID == NULL)) 
+		{
+			qcgires_setcontenttype(pReq, "text/xml");
+			printf("<?xml version='1.0' encoding='ISO-8859-1'?>\n");
+			printf("<SENSOR_ADD>\n");	
+			printf("<RET>ERROR</RET>\n");
+			printf("<MSG>Invalid Parameter!</MSG>\n");
+			printf("</SENSOR_ADD>\n");	
+		}
+        
+        // MAC, ID 로 삭제할 센서 검색.
+        char command[1024];
+        sprintf(command, "/home/kindmong/work/ftm_manager/cgi-bin/sensor_script/delete_sensor_list.sh %s %s", lpszMac, lpszID);
+
+        FILE *fp = popen(command, "r");
+        qcgires_setcontenttype(pReq, "text/xml");
+        printf("<?xml version='1.0' encoding='ISO-8859-1'?>\n");
+        printf("<SENSOR_ADDED>\n");
+        printf("<RET>OK</RET>\n");
+        printf("</SENSOR_ADDED>\n");
+        pclose(fp);
+
     }
     else
 	{
