@@ -62,7 +62,7 @@ int FTMC_SENSOR(qentry_t *pReq)
                             {
                                 printf("<SENSOR_ADDED>\n");
                                 printf("<SENSOR>\n");
-                                printf("<MAC>%s</MAC>", szMac);
+                                printf("<MAC>%s</MAC>\n", szMac);
                                 printf("<ID>%s</ID>\n", szID);	
                                 printf("<TYPE>%s</TYPE>\n", szType);	
                                 printf("<NAME>%s</NAME>\n", szName);	
@@ -100,7 +100,7 @@ int FTMC_SENSOR(qentry_t *pReq)
 		
         // MAC, ID 로 등록할 센서 검색 후 DB에 저장.
 		char command[1024];
-		sprintf(command, "/home/kindmong/work/ftm_manager/cgi-bin/sensor_script/get_sensor_info.sh %s | awk '/%s/ && /%s/' | xargs -t /home/kindmong/work/ftm_manager/cgi-bin/sensor_script/pull_sensor_list.sh", lpszMac, lpszMac, lpszID);
+		sprintf(command, "/home/kindmong/work/ftm_manager/cgi-bin/sensor_script/get_sensor_info.sh %s | awk '/%s/ && /%s/' | xargs -t /home/kindmong/work/ftm_manager/cgi-bin/sensor_script/push_sensor_list.sh", lpszMac, lpszMac, lpszID);
 
 		FILE *fp = popen(command, "r");
 		pclose(fp);
@@ -163,7 +163,7 @@ int FTMC_SENSOR(qentry_t *pReq)
                 {
                     printf("<SENSOR_ADDED>\n");
                     printf("<SENSOR>\n");
-                    printf("<MAC>%s</MAC>", szMac);
+                    printf("<MAC>%s</MAC>\n", szMac);
                     printf("<ID>%s</ID>\n", szID);	
                     printf("<TYPE>%s</TYPE>\n", szType);	
                     printf("<NAME>%s</NAME>\n", szName);	
@@ -205,7 +205,71 @@ int FTMC_SENSOR(qentry_t *pReq)
         printf("</SENSOR_ADDED>\n");
         pclose(fp);
 
-    }
+    } else if (strcmp(lpszCmd, "dashboard") == 0) {
+
+        char *lpszMac		= pReq->getstr(pReq, "mac", false);
+        char *lpszID        = pReq->getstr(pReq, "id", false);
+				
+		char command[2048];
+        sprintf(command, "/home/kindmong/work/ftm_manager/cgi-bin/sensor_script/get_sensing_list.sh %s %s | awk -F'|' '{ print $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12 }'", lpszMac, lpszID);
+
+		char	szBuf[2048];
+		FILE *pPF = popen(command, "r");
+
+		if (pPF != NULL)
+		{
+			qcgires_setcontenttype(pReq, "text/xml");
+			printf("<?xml version='1.0' encoding='ISO-8859-1'?>\n");
+			printf("<SENSOR>\n");
+			//printf("<TEST>%s</TEST>\n", command);
+            int countFlag = 0;
+			while(fgets(szBuf, sizeof(szBuf), pPF) != 0)
+			{
+                char    szIndex[64];
+				char	szMac[64];
+				char	szID[64];
+				char	szType[64];
+				char	szName[64];
+				char	szSN[128];
+				char	szState[64];
+				char	szValue[64];
+				char	szLastValue[64];
+				char	szLastTime[64];
+                char	szInterval[64];
+                char    szTime[64];
+                char    szTime2[64];
+
+                if (13 == sscanf(szBuf, "%s %s %s %s %s %s %s %s %s %s %s %s %s", szIndex, szMac, szID, szType, szName, szSN, szState, szValue, szLastValue, szLastTime, szInterval, szTime, szTime2))
+                {
+                    //printf("<INDEX>\n");
+                    if (countFlag == 0) {
+                        //printf("<NUMBER>%s</NUMBER>\n", szIndex);
+                        printf("<MAC>%s</MAC>\n", szMac);
+                        printf("<ID>%s</ID>\n", szID);	
+                        printf("<TYPE>%s</TYPE>\n", szType);	
+                        printf("<NAME>%s</NAME>\n", szName);	
+                        printf("<SN>%s</SN>\n", szSN);
+                        printf("<VALUES>\n");
+                    }
+                    countFlag = 1;
+                    printf("<INDEX>\n");
+                    printf("<NUMBER>%s</NUMBER>\n", szIndex);
+                    printf("<STATE>%s</STATE>\n", szState);
+                    printf("<VALUE>%s</VALUE>\n", szValue);
+                    printf("<LASTVALUE>%s</LASTVALUE>\n", szLastValue);
+                    printf("<LASTTIME>%s</LASTTIME>\n", szLastTime);
+                    printf("<INTERVAL>%s</INTERVAL>\n", szInterval);
+                    printf("<TIME>%s %s</TIME>\n", szTime, szTime2);
+                    printf("</INDEX>\n");
+                }
+			}
+            printf("</VALUES>\n");
+			printf("</SENSOR>\n");
+		}
+		pclose(pPF);
+
+	}
+
     else
 	{
 		return	-1;	
