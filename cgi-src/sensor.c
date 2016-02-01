@@ -138,7 +138,7 @@ int FTMC_SENSOR(qentry_t *pReq)
 	} else if (strcmp(lpszCmd, "sensinglist") == 0) {
         
         char	szBuf[1024];
-        FILE *pPF = popen("/home/kindmong/work/ftm_manager/cgi-bin/sensor_script/get_sensor_list.sh | awk -F'|' '{ print $1, $2, $3, $4 }'", "r");
+        FILE *pPF = popen("/home/kindmong/work/ftm_manager/cgi-bin/sensor_script/get_sensor_list.sh | awk -F'|' '{ print $1, $2, $3, $4, $5 }'", "r");
 
         if (pPF != NULL)
         {
@@ -152,6 +152,7 @@ int FTMC_SENSOR(qentry_t *pReq)
                 char	szID[64];
                 char	szType[64];
                 char	szName[64];
+                char    szFavorite[64];
                 //char	szSN[64];
                 //char	szState[64];
                 //char	szValue[64];
@@ -159,14 +160,15 @@ int FTMC_SENSOR(qentry_t *pReq)
                 //char	szLastTime[64];
                 //char	szInterval[64];
 
-                if (4 == sscanf(szBuf, "%s %s %s %s", szMac, szID, szType, szName))
+                if (5 == sscanf(szBuf, "%s %s %s %s %s", szMac, szID, szType, szName, szFavorite))
                 {
                     printf("<SENSOR_ADDED>\n");
                     printf("<SENSOR>\n");
                     printf("<MAC>%s</MAC>\n", szMac);
                     printf("<ID>%s</ID>\n", szID);	
                     printf("<TYPE>%s</TYPE>\n", szType);	
-                    printf("<NAME>%s</NAME>\n", szName);	
+                    printf("<NAME>%s</NAME>\n", szName);
+                    printf("<FAVORITE>%s</FAVORITE>\n", szFavorite);
                     //printf("<SN>%s</SN>\n", szSN);
                     //printf("<STATE>%s</STATE>\n", szState);
                     //printf("<VALUE>%s</VALUE>\n", szValue);
@@ -177,6 +179,35 @@ int FTMC_SENSOR(qentry_t *pReq)
             printf("</SENSOR_LIST>\n");
         }
         pclose(pPF);
+
+    } else if (strcmp(lpszCmd, "modifylist") == 0) {
+        char *lpszMac		= pReq->getstr(pReq, "mac", false);
+		char *lpszID		= pReq->getstr(pReq, "id", false);
+       	char *lpszChecked	= pReq->getstr(pReq, "checked", false);
+
+		if ((lpszMac == NULL) || 
+			(lpszID == NULL) ||
+            (lpszChecked == NULL)) 
+		{
+			qcgires_setcontenttype(pReq, "text/xml");
+			printf("<?xml version='1.0' encoding='ISO-8859-1'?>\n");
+			printf("<SENSOR_ADD>\n");	
+			printf("<RET>ERROR</RET>\n");
+			printf("<MSG>Invalid Parameter!</MSG>\n");
+			printf("</SENSOR_ADD>\n");	
+		}
+        
+        // MAC, ID 로 삭제할 센서 검색.
+        char command[1024];
+        sprintf(command, "/home/kindmong/work/ftm_manager/cgi-bin/sensor_script/modify_sensor_list.sh %s %s %s", lpszMac, lpszID, lpszChecked);
+
+        FILE *fp = popen(command, "r");
+        qcgires_setcontenttype(pReq, "text/xml");
+        printf("<?xml version='1.0' encoding='ISO-8859-1'?>\n");
+        printf("<SENSOR_MODIFY>\n");
+        printf("<RET>OK</RET>\n");
+        printf("</SENSOR_MODIFY>\n");
+        pclose(fp);
 
     } else if (strcmp(lpszCmd, "delete") == 0) {
         char *lpszMac		= pReq->getstr(pReq, "mac", false);
