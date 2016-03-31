@@ -17,8 +17,7 @@ int FTMC_SENSOR(qentry_t *pReq)
 
 				
 		char command[1024];
-		//sprintf(command, "/www/cgi-bin/sensor_script/get_fte_es7.sh %s", lpszMac);
-        sprintf(command, "/home/kindmong/work/ftm_manager/cgi-bin/sensor_script/search_node.sh %s", lpszMac);
+        sprintf(command, "/www/cgi-bin/sensor_script/search_node.sh %s", lpszMac);
 
 		char	szBuf[1024];
 		FILE *pPF = popen(command, "r");
@@ -46,7 +45,7 @@ int FTMC_SENSOR(qentry_t *pReq)
 				{
                     // 저장된 센서가 있는지 확인. 
                     char resCommand[1024];
-                    sprintf(resCommand, "/home/kindmong/work/ftm_manager/cgi-bin/sensor_script/get_added_sensor.sh %s %s | awk -f /home/kindmong/work/ftm_manager/cgi-bin/sensor_script/get_added_sensor.awk", szMac, szID);
+                    sprintf(resCommand, "/www/cgi-bin/sensor_script/get_added_sensor.sh %s %s | awk -f /www/cgi-bin/sensor_script/get_added_sensor.awk", szMac, szID);
 
                     char	szBuf[64];
                     FILE *fp = popen(resCommand, "r");
@@ -100,14 +99,14 @@ int FTMC_SENSOR(qentry_t *pReq)
 		
         // MAC, ID 로 등록할 센서 검색 후 DB에 저장.
 		char command[1024];
-		sprintf(command, "/home/kindmong/work/ftm_manager/cgi-bin/sensor_script/get_sensor_info.sh %s | awk '/%s/ && /%s/' | xargs -t /home/kindmong/work/ftm_manager/cgi-bin/sensor_script/push_sensor_list.sh", lpszMac, lpszMac, lpszID);
+		sprintf(command, "/www/cgi-bin/sensor_script/get_sensor_info.sh %s | awk '/%s/ && /%s/' | xargs -t /www/cgi-bin/sensor_script/push_sensor_list.sh", lpszMac, lpszMac, lpszID);
 
 		FILE *fp = popen(command, "r");
 		pclose(fp);
 
         // 센서가 제대로 저장되었는지 확인. 
 		char resCommand[1024];
-		sprintf(resCommand, "/home/kindmong/work/ftm_manager/cgi-bin/sensor_script/get_added_sensor.sh %s %s", lpszMac, lpszID);
+		sprintf(resCommand, "/www/cgi-bin/sensor_script/get_added_sensor.sh %s %s", lpszMac, lpszID);
 	
 		char	szBuf[64];
 		fp = popen(resCommand, "r");
@@ -138,7 +137,7 @@ int FTMC_SENSOR(qentry_t *pReq)
 	} else if (strcmp(lpszCmd, "sensinglist") == 0) {
         
         char	szBuf[1024];
-        FILE *pPF = popen("/home/kindmong/work/ftm_manager/cgi-bin/sensor_script/get_sensor_list.sh | awk -F'|' '{ print $1, $2, $3, $4, $5 }'", "r");
+        FILE *pPF = popen("/www/cgi-bin/sensor_script/get_sensor_list.sh | awk -F'|' '{ print $1, $2, $3, $4, $5 }'", "r");
 
         if (pPF != NULL)
         {
@@ -199,7 +198,7 @@ int FTMC_SENSOR(qentry_t *pReq)
         
         // MAC, ID 로 삭제할 센서 검색.
         char command[1024];
-        sprintf(command, "/home/kindmong/work/ftm_manager/cgi-bin/sensor_script/modify_sensor_list.sh %s %s %s", lpszMac, lpszID, lpszChecked);
+        sprintf(command, "/www/cgi-bin/sensor_script/modify_sensor_list.sh %s %s %s", lpszMac, lpszID, lpszChecked);
 
         FILE *fp = popen(command, "r");
         qcgires_setcontenttype(pReq, "text/xml");
@@ -226,7 +225,7 @@ int FTMC_SENSOR(qentry_t *pReq)
         
         // MAC, ID 로 삭제할 센서 검색.
         char command[1024];
-        sprintf(command, "/home/kindmong/work/ftm_manager/cgi-bin/sensor_script/delete_sensor_list.sh %s %s", lpszMac, lpszID);
+        sprintf(command, "/www/cgi-bin/sensor_script/delete_sensor_list.sh %s %s", lpszMac, lpszID);
 
         FILE *fp = popen(command, "r");
         qcgires_setcontenttype(pReq, "text/xml");
@@ -236,13 +235,41 @@ int FTMC_SENSOR(qentry_t *pReq)
         printf("</SENSOR_ADDED>\n");
         pclose(fp);
 
-    } else if (strcmp(lpszCmd, "dashboard") == 0) {
+	} else if (strcmp(lpszCmd, "name_modify") == 0) {  
+		char *lpszMac        = pReq->getstr(pReq, "mac", false);
+		char *lpszID         = pReq->getstr(pReq, "id", false);
+		char *lpszName     	 = pReq->getstr(pReq, "name", false);
+		if ((lpszMac == NULL) || 
+			(lpszID == NULL) ||
+			(lpszName == NULL)) 
+		{
+				qcgires_setcontenttype(pReq, "text/xml");
+				printf("<?xml version='1.0' encoding='ISO-8859-1'?>\n");
+				printf("<SENSOR_ADD>\n");
+				printf("<RET>ERROR</RET>\n");
+				printf("<MSG>Invalid Parameter!</MSG>\n");
+				printf("</SENSOR_ADD>\n");
+		}
+
+		// MAC, ID 로 네임 수정 할 센서 검색.
+		char command[2048];
+		sprintf(command, "/www/cgi-bin/sensor_script/modify_name_sensor_list.sh %s %s %s", lpszMac, lpszID, lpszName);
+
+		FILE *fp = popen(command, "r");
+		qcgires_setcontenttype(pReq, "text/xml");
+		printf("<?xml version='1.0' encoding='ISO-8859-1'?>\n");
+		printf("<SENSOR_ADDED>\n");
+		printf("<RET>OK</RET>\n");
+		printf("</SENSOR_ADDED>\n");
+		pclose(fp);
+
+	} else if (strcmp(lpszCmd, "dashboard") == 0) {
 
         char *lpszMac		= pReq->getstr(pReq, "mac", false);
         char *lpszID        = pReq->getstr(pReq, "id", false);
 				
 		char command[2048];
-        sprintf(command, "/home/kindmong/work/ftm_manager/cgi-bin/sensor_script/get_sensing_list.sh %s %s | awk -F'|' '{ print $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12 }'", lpszMac, lpszID);
+        sprintf(command, "/www/cgi-bin/sensor_script/get_sensing_list.sh %s %s | awk -F'|' '{ print $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12 }'", lpszMac, lpszID);
 
 		char	szBuf[2048];
 		FILE *pPF = popen(command, "r");
